@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Summer Activities Schedule</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      display: flex;
+    }
+    .classroom-labels {
+      position: sticky;
+      left: 0;
+      background: white;
+      z-index: 2;
+    }
+    .classroom-label {
+      width: 120px;
+      height: 40px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      background-color: #f0f0f0;
+      font-weight: bold;
+      text-align: left;
+      white-space: nowrap;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .edit-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 8px;
+      color: #007bff;
+    }
+    .timeline {
+      overflow-x: auto;
+      width: 100%;
+    }
+    .header, .row {
+      display: flex;
+    }
+    .header .cell {
+      font-weight: bold;
+      background-color: #e0e0e0;
+    }
+    .cell {
+      min-width: 100px;
+      height: 40px;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+      position: relative;
+      box-sizing: border-box;
+    }
+    .activity {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: black;
+      font-size: 10px;
+      padding: 2px;
+      box-sizing: border-box;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .activity-form {
+      position: absolute;
+      top: 40px;
+      left: 0;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 8px;
+      z-index: 10;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      font-size: 12px;
+      width: 180px;
+    }
+    .activity-form input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 4px;
+    }
+    .weekday {
+      margin-right: 6px;
+      user-select: none;
+    }
+    .buttons {
+      margin-top: 6px;
+      text-align: right;
+    }
+    .buttons button {
+      margin-left: 6px;
+    }
+  </style>
+  <!-- html2pdf.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <h2 style="padding: 10px;">Summer Activities Schedule</h2>
+  <form id="classroom-form" style="padding: 10px;">
+    <input type="text" id="classroom-name" placeholder="Classroom Name" required />
+    <input type="color" id="classroom-color" value="#cccccc" />
+    <button type="submit">Add Classroom</button>
+    <button type="button" id="reset-data" style="margin-left: 10px;">Reset All</button>
+    <button type="button" id="export-pdf" style="margin-left: 10px;">Export PDF</button>
+  </form>
+  <div class="container">
+    <div class="classroom-labels">
+      <div class="cell"></div>
+      <div id="labels"></div>
+    </div>
+    <div class="timeline">
+      <div class="header" id="date-header"></div>
+      <div id="rows"></div>
+    </div>
+  </div>
+
+  <script>
+    const start = new Date("2025-06-01");
+    const end = new Date("2025-08-31");
+    const header = document.getElementById("date-header");
+    const rowsContainer = document.getElementById("rows");
+    const labelsContainer = document.getElementById("labels");
+    const classroomForm = document.getElementById("classroom-form");
+    const resetButton = document.getElementById("reset-data");
+
+    let classrooms = [];
+
+    const dates = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const newDate = new Date(d);
+      dates.push(newDate);
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      cell.textContent = `${dayNames[newDate.getDay()]} ${newDate.getMonth() + 1}/${newDate.getDate()}`;
+      header.appendChild(cell);
+    }
+
+    classroomForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("classroom-name").value.trim();
+      const color = document.getElementById("classroom-color").value;
+      if (!name) return;
+      classrooms.push({ name, color, activities: [], repeatedActivities: [] });
+      saveData();
+      rebuildSchedule();
+      classroomForm.reset();
+    });
+
+    resetButton.addEventListener("click", () => {
+      if (confirm("Are you sure you want to reset all data?")) {
+        localStorage.removeItem("summerActivitiesData");
+        classrooms = [];
+        rebuildSchedule();
+      }
+    });
+
+    document.getElementById("export-pdf").addEventListener("click", () => {
+      const container = document.querySelector(".container");
+      const timeline = container.querySelector(".timeline");
+
+      // Calculate total width needed: one cell width * number of dates + label width
+      const cellWidth = 100; // min-width of each .cell in px
+      const labelWidth = 120; // width of classroom-labels
+      const totalWidth = labelWidth + (cellWidth * dates.length);
+
+      // Temporarily override styles to expand timeline
+      const oldTimelineWidth = timeline.style.width;
+      const oldTimelineOverflow = timeline.style.overflowX;
+
+      timeline.style.width = totalWidth + "px";
+      timeline.style.overflowX = "visible";
+
+      // Export with html2pdf
+      const opt = {
+        margin:       0.5,
+        filename:     'summer_schedule.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'A2', orientation: 'landscape' }
+      };
+
+      html2pdf().set(opt).from(container).save().finally(() => {
+        // Restore old styles after export
+        timeline.style.width = oldTimelineWidth;
+        timeline.style.overflowX = oldTimelineOverflow;
+      });
+    });
+
+
+    function saveData() {
+      localStorage.setItem("summerActivitiesData", JSON.stringify(classrooms));
+    }
+
+    function loadData() {
+      const data = localStorage.getItem("summerActivitiesData");
+      if (data) {
+        classrooms = JSON.parse(data);
+      }
+    }
+
+    function rebuildSchedule() {
+      labelsContainer.innerHTML = "";
+      rowsContainer.innerHTML = "";
+
+      classrooms.forEach((classroom, classIndex) => {
+        const label = document.createElement("div");
+        label.className = "classroom-label";
+        label.style.backgroundColor = classroom.color + "33";
+
+        const labelText = document.createElement("span");
+        labelText.textContent = classroom.name;
+
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.className = "edit-btn";
+        editBtn.onclick = () => {
+          const newName = prompt("Edit classroom name:", classroom.name);
+          if (newName !== null && newName.trim()) {
+            classroom.name = newName.trim();
+            saveData();
+            rebuildSchedule();
+          }
+        };
+
+        label.appendChild(labelText);
+        label.appendChild(editBtn);
+        labelsContainer.appendChild(label);
+
+        const row = document.createElement("div");
+        row.className = "row";
+
+        dates.forEach(date => {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.title = `${classroom.name} - ${date.getMonth() + 1}/${date.getDate()}`;
+
+          let repeatedText = "";
+          classroom.repeatedActivities.forEach(rep => {
+            if (rep.days.includes(date.getDay())) {
+              repeatedText = rep.text;
+            }
+          });
+
+          const dateStr = date.toISOString().slice(0,10);
+          const oneTimeActivity = classroom.activities.find(a => a.date === dateStr);
+
+          let activityText = oneTimeActivity ? oneTimeActivity.text : repeatedText;
+
+          if (activityText) {
+            const act = document.createElement("div");
+            act.className = "activity";
+            act.style.backgroundColor = classroom.color;
+            act.textContent = activityText;
+            cell.appendChild(act);
+          }
+
+          cell.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            removeExistingForms();
+
+            const formDiv = document.createElement("div");
+            formDiv.className = "activity-form";
+            formDiv.addEventListener("click", e => e.stopPropagation());
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.placeholder = "Activity text";
+            input.value = activityText || "";
+            formDiv.appendChild(input);
+
+            const daysDiv = document.createElement("div");
+            daysDiv.style.marginTop = "6px";
+
+            const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            dayNames.forEach((dname, i) => {
+              const label = document.createElement("label");
+              label.className = "weekday";
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.value = i;
+              checkbox.style.marginRight = "2px";
+              label.appendChild(checkbox);
+              label.appendChild(document.createTextNode(dname));
+              daysDiv.appendChild(label);
+            });
+
+            if (activityText) {
+              const repeated = classroom.repeatedActivities.find(r => r.text === activityText);
+              if (repeated) {
+                daysDiv.querySelectorAll("input[type=checkbox]").forEach(chk => {
+                  if (repeated.days.includes(parseInt(chk.value))) {
+                    chk.checked = true;
+                  }
+                });
+              }
+            }
+
+            daysDiv.querySelectorAll("input[type=checkbox]").forEach(chk => {
+              chk.addEventListener("click", ev => ev.stopPropagation());
+            });
+
+            formDiv.appendChild(daysDiv);
+
+            const buttonsDiv = document.createElement("div");
+            buttonsDiv.className = "buttons";
+
+            const saveBtn = document.createElement("button");
+            saveBtn.textContent = "Save";
+            saveBtn.type = "button";
+            saveBtn.addEventListener("click", ev => {
+              ev.preventDefault();
+              ev.stopPropagation();
+
+              const text = input.value.trim();
+              const checkedDays = Array.from(daysDiv.querySelectorAll("input[type=checkbox]:checked")).map(c => parseInt(c.value));
+
+              if (!text) {
+                alert("Please enter activity text");
+                return;
+              }
+
+              classroom.activities = classroom.activities.filter(a => a.date !== dateStr);
+              classroom.repeatedActivities = classroom.repeatedActivities.filter(r => r.text !== text);
+
+              if (checkedDays.length > 0) {
+                classroom.repeatedActivities.push({ text, days: checkedDays });
+              } else {
+                classroom.activities.push({ date: dateStr, text });
+              }
+
+              saveData();
+              rebuildSchedule();
+            });
+            buttonsDiv.appendChild(saveBtn);
+
+            const delBtn = document.createElement("button");
+            delBtn.textContent = "Delete";
+            delBtn.type = "button";
+            delBtn.addEventListener("click", ev => {
+              ev.preventDefault();
+              ev.stopPropagation();
+
+              classroom.activities = classroom.activities.filter(a => a.date !== dateStr);
+              classroom.repeatedActivities = classroom.repeatedActivities.filter(r => r.text !== activityText);
+
+              saveData();
+              rebuildSchedule();
+            });
+            buttonsDiv.appendChild(delBtn);
+
+            formDiv.appendChild(buttonsDiv);
+            cell.appendChild(formDiv);
+          });
+
+          row.appendChild(cell);
+        });
+
+        rowsContainer.appendChild(row);
+      });
+    }
+
+    function removeExistingForms() {
+      const existing = document.querySelectorAll(".activity-form");
+      existing.forEach(f => f.remove());
+    }
+
+    document.body.addEventListener("click", () => {
+      removeExistingForms();
+    });
+
+    loadData();
+    rebuildSchedule();
+  </script>
+</body>
+</html>
