@@ -20,7 +20,7 @@
       z-index: 2;
     }
     .classroom-label {
-      width: 120px;
+      width: 150px;
       height: 40px;
       padding: 8px;
       border: 1px solid #ccc;
@@ -53,7 +53,7 @@
       background-color: #e0e0e0;
     }
     .cell {
-      min-width: 100px;
+      min-width: 150px;
       height: 40px;
       border: 1px solid #ccc;
       display: flex;
@@ -233,13 +233,71 @@
         const editBtn = document.createElement("button");
         editBtn.textContent = "Edit";
         editBtn.className = "edit-btn";
-        editBtn.onclick = () => {
-          const newName = prompt("Edit classroom name:", classroom.name);
-          if (newName !== null && newName.trim()) {
-            classroom.name = newName.trim();
+        editBtn.onclick = (e) => {
+          e.stopPropagation();
+          removeExistingForms(); // Close other open forms
+
+          const formDiv = document.createElement("div");
+          formDiv.className = "activity-form";
+          formDiv.style.left = "auto";
+          formDiv.style.top = "30px"; // Slightly higher so it doesn't hide
+          formDiv.style.zIndex = 20;
+          formDiv.addEventListener("click", e => e.stopPropagation());
+
+
+          // Name input
+          const nameInput = document.createElement("input");
+          nameInput.type = "text";
+          nameInput.value = classroom.name;
+          nameInput.placeholder = "Classroom name";
+          formDiv.appendChild(nameInput);
+
+          // Color input
+          const colorInput = document.createElement("input");
+          colorInput.type = "color";
+          colorInput.value = classroom.color;
+          colorInput.style.marginTop = "6px";
+          formDiv.appendChild(colorInput);
+
+          // Buttons
+          const buttonsDiv = document.createElement("div");
+          buttonsDiv.className = "buttons";
+
+          const saveBtn = document.createElement("button");
+          saveBtn.textContent = "Save";
+          saveBtn.type = "button";
+          saveBtn.onclick = (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+
+            const newName = nameInput.value.trim();
+            const newColor = colorInput.value;
+
+            if (!newName) {
+              alert("Please enter a valid name");
+              return;
+            }
+
+            classroom.name = newName;
+            classroom.color = newColor;
+
             saveData();
-            rebuildSchedule();
-          }
+            rebuildSchedule(); // Re-render everything
+          };
+          buttonsDiv.appendChild(saveBtn);
+
+          const cancelBtn = document.createElement("button");
+          cancelBtn.textContent = "Cancel";
+          cancelBtn.type = "button";
+          cancelBtn.onclick = (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            formDiv.remove();
+          };
+          buttonsDiv.appendChild(cancelBtn);
+
+          formDiv.appendChild(buttonsDiv);
+          label.appendChild(formDiv);
         };
 
         label.appendChild(labelText);
@@ -282,11 +340,13 @@
             formDiv.className = "activity-form";
             formDiv.addEventListener("click", e => e.stopPropagation());
 
-            const input = document.createElement("input");
-            input.type = "text";
-            input.placeholder = "Activity text";
-            input.value = activityText || "";
-            formDiv.appendChild(input);
+            const textarea = document.createElement("textarea");
+            textarea.placeholder = "Activity text";
+            textarea.value = activityText || "";
+            textarea.rows = 3;
+            textarea.style.width = "100%";
+            textarea.style.boxSizing = "border-box";
+            formDiv.appendChild(textarea);
 
             const daysDiv = document.createElement("div");
             daysDiv.style.marginTop = "6px";
