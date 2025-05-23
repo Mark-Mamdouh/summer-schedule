@@ -119,14 +119,14 @@
 <body>
   <h2 style="padding: 10px;">جدول الانشطة الصيفية 2025</h2>
   <form id="classroom-form" style="padding: 10px;">
-    <!-- <input type="text" id="classroom-name" placeholder="Classroom Name" required />
+    <input type="text" id="classroom-name" placeholder="Classroom Name" required />
     <input type="color" id="classroom-color" value="#cccccc" />
     <button type="submit">Add Classroom</button>
     <button type="button" id="reset-data" style="margin-left: 10px;">Reset All</button>
     <button type="button" id="export-pdf" style="margin-left: 10px;">Export PDF</button>
     <button onclick="exportData()">Export Schedule</button>
     <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)">
-    <button onclick="document.getElementById('importInput').click()">Import Schedule</button>     -->
+    <!-- <button onclick="document.getElementById('importInput').click()">Import Schedule</button>     -->
   </form>
   <div class="container">
     <div class="classroom-labels">
@@ -154,14 +154,8 @@
       measurementId: "G-KSX39BZMP3"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
-
-    // Get Firestore
     const db = firebase.firestore();
-
-   
-
     const start = new Date("2025-06-01");
     const end = new Date("2025-08-31");
     const header = document.getElementById("date-header");
@@ -181,37 +175,38 @@
       header.appendChild(cell);
     }
 
-    classroomForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const name = document.getElementById("classroom-name").value.trim();
-      const color = document.getElementById("classroom-color").value;
-      if (!name) return;
-      classrooms.push({ name, color, activities: [] });
-      saveData();
-      rebuildSchedule();
-      classroomForm.reset();
-    });
+    // classroomForm.addEventListener("submit", (e) => {
+    //   e.preventDefault();
+    //   const name = document.getElementById("classroom-name").value.trim();
+    //   const color = document.getElementById("classroom-color").value;
+    //   if (!name) return;
+    //   classrooms.push({ name, color, activities: [] });
+    //   saveData();
+    //   rebuildSchedule();
+    //   classroomForm.reset();
+    // });
 
-    document.getElementById("reset-data").addEventListener("click", () => {
-      if (confirm("Are you sure you want to reset all data?")) {
-        localStorage.removeItem("summerActivitiesData2");
-        classrooms = [];
-        rebuildSchedule();
-      }
-    });
+    // document.getElementById("reset-data").addEventListener("click", () => {
+    //   if (confirm("Are you sure you want to reset all data?")) {
+    //     localStorage.removeItem("summerActivitiesData2");
+    //     classrooms = [];
+    //     rebuildSchedule();
+    //   }
+    // });
 
-    document.getElementById("export-pdf").addEventListener("click", () => {
-      const container = document.querySelector(".container");
-      const opt = {
-        margin: 0.5,
-        filename: 'summer_schedule.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'A2', orientation: 'landscape' }
-      };
-      html2pdf().set(opt).from(container).save();
-    });
+    // document.getElementById("export-pdf").addEventListener("click", () => {
+    //   const container = document.querySelector(".container");
+    //   const opt = {
+    //     margin: 0.5,
+    //     filename: 'summer_schedule.pdf',
+    //     image: { type: 'jpeg', quality: 0.98 },
+    //     html2canvas: { scale: 2 },
+    //     jsPDF: { unit: 'in', format: 'A2', orientation: 'landscape' }
+    //   };
+    //   html2pdf().set(opt).from(container).save();
+    // });
 
+    // save data locally
     // function saveData() {
     //   localStorage.setItem("summerActivitiesData2", JSON.stringify(classrooms));
     // }
@@ -230,6 +225,7 @@
       }
     }
 
+    // load data from
     // function loadData() {
     //   const data = localStorage.getItem("summerActivitiesData2");
     //   if (data) classrooms = JSON.parse(data);
@@ -342,147 +338,147 @@
       });
     }
 
-    function showActivityForm(cell, classroom, dateStr, existing = null) {
-      const form = document.createElement("div");
-      form.className = "activity-form";
-      form.addEventListener("click", e => e.stopPropagation());
+    // function showActivityForm(cell, classroom, dateStr, existing = null) {
+    //   const form = document.createElement("div");
+    //   form.className = "activity-form";
+    //   form.addEventListener("click", e => e.stopPropagation());
 
-      const textarea = document.createElement("textarea");
-      textarea.rows = 3;
-      textarea.placeholder = "Activity description...";
-      textarea.value = existing ? existing.text : "";
-      form.appendChild(textarea);
+    //   const textarea = document.createElement("textarea");
+    //   textarea.rows = 3;
+    //   textarea.placeholder = "Activity description...";
+    //   textarea.value = existing ? existing.text : "";
+    //   form.appendChild(textarea);
 
-      if (!existing) {
-        // Repeat options only for new activity
-        const repeatLabel = document.createElement("div");
-        repeatLabel.textContent = "Repeat on:";
-        repeatLabel.style.margin = "4px 0 2px";
-        form.appendChild(repeatLabel);
+    //   if (!existing) {
+    //     // Repeat options only for new activity
+    //     const repeatLabel = document.createElement("div");
+    //     repeatLabel.textContent = "Repeat on:";
+    //     repeatLabel.style.margin = "4px 0 2px";
+    //     form.appendChild(repeatLabel);
 
-        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        const checkboxesDiv = document.createElement("div");
+    //     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    //     const checkboxesDiv = document.createElement("div");
 
-        dayNames.forEach((day, i) => {
-          const label = document.createElement("label");
-          label.style.display = "inline-block";
-          label.style.marginRight = "5px";
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.value = i;
-          label.appendChild(checkbox);
-          label.append(" " + day);
-          checkboxesDiv.appendChild(label);
-        });
+    //     dayNames.forEach((day, i) => {
+    //       const label = document.createElement("label");
+    //       label.style.display = "inline-block";
+    //       label.style.marginRight = "5px";
+    //       const checkbox = document.createElement("input");
+    //       checkbox.type = "checkbox";
+    //       checkbox.value = i;
+    //       label.appendChild(checkbox);
+    //       label.append(" " + day);
+    //       checkboxesDiv.appendChild(label);
+    //     });
 
-        form.appendChild(checkboxesDiv);
-      }
+    //     form.appendChild(checkboxesDiv);
+    //   }
 
-      const buttonsDiv = document.createElement("div");
-      buttonsDiv.className = "buttons";
+    //   const buttonsDiv = document.createElement("div");
+    //   buttonsDiv.className = "buttons";
 
-      const saveBtn = document.createElement("button");
-      saveBtn.textContent = "Save";
-      saveBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const newText = textarea.value.trim();
-        if (!newText) return;
+    //   const saveBtn = document.createElement("button");
+    //   saveBtn.textContent = "Save";
+    //   saveBtn.addEventListener("click", (e) => {
+    //     e.preventDefault();
+    //     e.stopPropagation();
+    //     const newText = textarea.value.trim();
+    //     if (!newText) return;
 
-        if (existing) {
-          existing.text = newText;
-        } else {
-          const selectedWeekdays = Array.from(form.querySelectorAll("input[type=checkbox]:checked")).map(cb => parseInt(cb.value));
-          const targetDate = new Date(dateStr);
+    //     if (existing) {
+    //       existing.text = newText;
+    //     } else {
+    //       const selectedWeekdays = Array.from(form.querySelectorAll("input[type=checkbox]:checked")).map(cb => parseInt(cb.value));
+    //       const targetDate = new Date(dateStr);
 
-          // Add activity to selected days
-          dates.forEach(date => {
-            if (selectedWeekdays.includes(date.getDay())) {
-              const iso = date.toISOString().slice(0, 10);
-              classroom.activities.push({ date: iso, text: newText });
-            }
-          });
+    //       // Add activity to selected days
+    //       dates.forEach(date => {
+    //         if (selectedWeekdays.includes(date.getDay())) {
+    //           const iso = date.toISOString().slice(0, 10);
+    //           classroom.activities.push({ date: iso, text: newText });
+    //         }
+    //       });
 
-          // If no repeat days, add just this one
-          if (selectedWeekdays.length === 0) {
-            classroom.activities.push({ date: dateStr, text: newText });
-          }
-        }
+    //       // If no repeat days, add just this one
+    //       if (selectedWeekdays.length === 0) {
+    //         classroom.activities.push({ date: dateStr, text: newText });
+    //       }
+    //     }
 
-        saveData();
-        rebuildSchedule();
-      });
-      buttonsDiv.appendChild(saveBtn);
+    //     saveData();
+    //     rebuildSchedule();
+    //   });
+    //   buttonsDiv.appendChild(saveBtn);
 
-      if (existing) {
-        const deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "Delete";
-        deleteBtn.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          classroom.activities = classroom.activities.filter(a => a !== existing);
-          saveData();
-          rebuildSchedule();
-        });
-        buttonsDiv.appendChild(deleteBtn);
-      }
+    //   if (existing) {
+    //     const deleteBtn = document.createElement("button");
+    //     deleteBtn.textContent = "Delete";
+    //     deleteBtn.addEventListener("click", (e) => {
+    //       e.preventDefault();
+    //       e.stopPropagation();
+    //       classroom.activities = classroom.activities.filter(a => a !== existing);
+    //       saveData();
+    //       rebuildSchedule();
+    //     });
+    //     buttonsDiv.appendChild(deleteBtn);
+    //   }
 
-      form.appendChild(buttonsDiv);
-      cell.appendChild(form);
-    }
+    //   form.appendChild(buttonsDiv);
+    //   cell.appendChild(form);
+    // }
 
-    function removeExistingForms() {
-      document.querySelectorAll(".activity-form").forEach(f => f.remove());
-    }
+    // function removeExistingForms() {
+    //   document.querySelectorAll(".activity-form").forEach(f => f.remove());
+    // }
 
-    function exportData() {
-      const data = {
-        classrooms: classrooms,
-        dates: dates.map(d => d.toISOString())
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
+    // function exportData() {
+    //   const data = {
+    //     classrooms: classrooms,
+    //     dates: dates.map(d => d.toISOString())
+    //   };
+    //   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    //   const url = URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "schedule-data.json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
+    //   const a = document.createElement("a");
+    //   a.href = url;
+    //   a.download = "schedule-data.json";
+    //   document.body.appendChild(a);
+    //   a.click();
+    //   document.body.removeChild(a);
+    //   URL.revokeObjectURL(url);
+    // }
 
-    function importData(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+    // function importData(event) {
+    //   const file = event.target.files[0];
+    //   if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const importedData = JSON.parse(e.target.result);
-          if (Array.isArray(importedData.classrooms) && Array.isArray(importedData.dates)) {
-            classrooms = importedData.classrooms;
-            dates = importedData.dates.map(d => new Date(d));
-            saveData();
-            rebuildSchedule();
-            alert("Schedule imported successfully!");
-          } else {
-            alert("Invalid data format.");
-          }
-        } catch (err) {
-          alert("Failed to import data: " + err.message);
-        }
-      };
-      reader.readAsText(file);
-    }
+    //   const reader = new FileReader();
+    //   reader.onload = function(e) {
+    //     try {
+    //       const importedData = JSON.parse(e.target.result);
+    //       if (Array.isArray(importedData.classrooms) && Array.isArray(importedData.dates)) {
+    //         classrooms = importedData.classrooms;
+    //         dates = importedData.dates.map(d => new Date(d));
+    //         saveData();
+    //         rebuildSchedule();
+    //         alert("Schedule imported successfully!");
+    //       } else {
+    //         alert("Invalid data format.");
+    //       }
+    //     } catch (err) {
+    //       alert("Failed to import data: " + err.message);
+    //     }
+    //   };
+    //   reader.readAsText(file);
+    // }
 
 
-    document.body.addEventListener("click", (e) => {
-      // Only close forms if click is outside any .activity-form or .edit-btn
-      if (!e.target.closest(".activity-form") && !e.target.closest(".edit-btn")) {
-        removeExistingForms();
-      }
-    });
+    // document.body.addEventListener("click", (e) => {
+    //   // Only close forms if click is outside any .activity-form or .edit-btn
+    //   if (!e.target.closest(".activity-form") && !e.target.closest(".edit-btn")) {
+    //     removeExistingForms();
+    //   }
+    // });
 
 
     loadData();
