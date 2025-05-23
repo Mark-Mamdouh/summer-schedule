@@ -139,7 +139,29 @@
     </div>
   </div>
 
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDH2QOsmTUnJIwVNAK2tWGDgl3NvRCIGU4",
+      authDomain: "summer-activities-8fda5.firebaseapp.com",
+      projectId: "summer-activities-8fda5",
+      storageBucket: "summer-activities-8fda5.firebasestorage.app",
+      messagingSenderId: "780198918611",
+      appId: "1:780198918611:web:906f8dd1ffe0a6bea19726",
+      measurementId: "G-KSX39BZMP3"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // Get Firestore
+    const db = firebase.firestore();
+
+   
+
     const start = new Date("2025-06-01");
     const end = new Date("2025-08-31");
     const header = document.getElementById("date-header");
@@ -190,13 +212,45 @@
       html2pdf().set(opt).from(container).save();
     });
 
-    function saveData() {
-      localStorage.setItem("summerActivitiesData2", JSON.stringify(classrooms));
+    // function saveData() {
+    //   localStorage.setItem("summerActivitiesData2", JSON.stringify(classrooms));
+    // }
+
+    async function saveData() {
+      localStorage.setItem("summerActivitiesData1", JSON.stringify(classrooms));
+      try {
+        await db.collection("schedules").doc("main").set({
+          classrooms,
+          dates: dates.map(d => d.toISOString()),
+          timestamp: new Date().toISOString()
+        });
+        console.log("Data saved to Firestore");
+      } catch (error) {
+        console.error("Error saving to Firestore:", error);
+      }
     }
 
-    function loadData() {
-      const data = localStorage.getItem("summerActivitiesData2");
-      if (data) classrooms = JSON.parse(data);
+    // function loadData() {
+    //   const data = localStorage.getItem("summerActivitiesData2");
+    //   if (data) classrooms = JSON.parse(data);
+    // }
+
+    async function loadData() {
+      try {
+        const doc = await db.collection("schedules").doc("main").get();
+        if (doc.exists) {
+          const data = doc.data();
+          classrooms = data.classrooms;
+          dates = data.dates.map(d => new Date(d));
+          console.log("Data loaded from Firestore");
+        } else {
+          // fallback to local storage
+          const local = localStorage.getItem("summerActivitiesData1");
+          if (local) classrooms = JSON.parse(local);
+        }
+      } catch (error) {
+        console.error("Failed to load from Firestore:", error);
+      }
     }
 
     function rebuildSchedule() {
