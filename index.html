@@ -124,6 +124,9 @@
     <button type="submit">Add Classroom</button>
     <button type="button" id="reset-data" style="margin-left: 10px;">Reset All</button>
     <button type="button" id="export-pdf" style="margin-left: 10px;">Export PDF</button>
+    <button onclick="exportData()">Export Schedule</button>
+    <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)">
+    <button onclick="document.getElementById('importInput').click()">Import Schedule</button>    
   </form>
   <div class="container">
     <div class="classroom-labels">
@@ -145,7 +148,7 @@
     const classroomForm = document.getElementById("classroom-form");
 
     let classrooms = [];
-    const dates = [];
+    let dates = [];
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const newDate = new Date(d);
       dates.push(newDate);
@@ -169,7 +172,7 @@
 
     document.getElementById("reset-data").addEventListener("click", () => {
       if (confirm("Are you sure you want to reset all data?")) {
-        localStorage.removeItem("summerActivitiesData");
+        localStorage.removeItem("summerActivitiesData2");
         classrooms = [];
         rebuildSchedule();
       }
@@ -188,11 +191,11 @@
     });
 
     function saveData() {
-      localStorage.setItem("summerActivitiesData1", JSON.stringify(classrooms));
+      localStorage.setItem("summerActivitiesData2", JSON.stringify(classrooms));
     }
 
     function loadData() {
-      const data = localStorage.getItem("summerActivitiesData1");
+      const data = localStorage.getItem("summerActivitiesData2");
       if (data) classrooms = JSON.parse(data);
     }
 
@@ -376,6 +379,48 @@
     function removeExistingForms() {
       document.querySelectorAll(".activity-form").forEach(f => f.remove());
     }
+
+    function exportData() {
+      const data = {
+        classrooms: classrooms,
+        dates: dates.map(d => d.toISOString())
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "schedule-data.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (Array.isArray(importedData.classrooms) && Array.isArray(importedData.dates)) {
+            classrooms = importedData.classrooms;
+            dates = importedData.dates.map(d => new Date(d));
+            saveData();
+            rebuildSchedule();
+            alert("Schedule imported successfully!");
+          } else {
+            alert("Invalid data format.");
+          }
+        } catch (err) {
+          alert("Failed to import data: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
 
     document.body.addEventListener("click", (e) => {
       // Only close forms if click is outside any .activity-form or .edit-btn
