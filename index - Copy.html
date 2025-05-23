@@ -20,7 +20,7 @@
       z-index: 2;
     }
     .classroom-label {
-      width: 150px;
+      width: 200px;
       height: 40px;
       padding: 8px;
       border: 1px solid #ccc;
@@ -51,9 +51,13 @@
     .header .cell {
       font-weight: bold;
       background-color: #e0e0e0;
+      justify-content: center;
+      align-items: center;
+      display: flex;
+      text-align: center;
     }
     .cell {
-      min-width: 150px;
+      min-width: 200px;
       height: 40px;
       border: 1px solid #ccc;
       display: flex;
@@ -68,8 +72,8 @@
     }
     .activity {
       width: 100%;
-      color: black;
-      font-size: 10px;
+      color: rgb(0, 0, 0);
+      font-size: 12px;
       margin-bottom: 2px;
       padding: 2px;
       box-sizing: border-box;
@@ -287,8 +291,34 @@
 
       const textarea = document.createElement("textarea");
       textarea.rows = 3;
+      textarea.placeholder = "Activity description...";
       textarea.value = existing ? existing.text : "";
       form.appendChild(textarea);
+
+      if (!existing) {
+        // Repeat options only for new activity
+        const repeatLabel = document.createElement("div");
+        repeatLabel.textContent = "Repeat on:";
+        repeatLabel.style.margin = "4px 0 2px";
+        form.appendChild(repeatLabel);
+
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const checkboxesDiv = document.createElement("div");
+
+        dayNames.forEach((day, i) => {
+          const label = document.createElement("label");
+          label.style.display = "inline-block";
+          label.style.marginRight = "5px";
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.value = i;
+          label.appendChild(checkbox);
+          label.append(" " + day);
+          checkboxesDiv.appendChild(label);
+        });
+
+        form.appendChild(checkboxesDiv);
+      }
 
       const buttonsDiv = document.createElement("div");
       buttonsDiv.className = "buttons";
@@ -304,7 +334,21 @@
         if (existing) {
           existing.text = newText;
         } else {
-          classroom.activities.push({ date: dateStr, text: newText });
+          const selectedWeekdays = Array.from(form.querySelectorAll("input[type=checkbox]:checked")).map(cb => parseInt(cb.value));
+          const targetDate = new Date(dateStr);
+
+          // Add activity to selected days
+          dates.forEach(date => {
+            if (selectedWeekdays.includes(date.getDay())) {
+              const iso = date.toISOString().slice(0, 10);
+              classroom.activities.push({ date: iso, text: newText });
+            }
+          });
+
+          // If no repeat days, add just this one
+          if (selectedWeekdays.length === 0) {
+            classroom.activities.push({ date: dateStr, text: newText });
+          }
         }
 
         saveData();
